@@ -204,6 +204,15 @@
         .preview-actions {
             margin-top: 10px;
         }
+
+        .htmx-request .empty-results {
+            display: none;
+        }
+        
+        .htmx-request #loading-spinner {
+            display: block !important;
+        }
+
     </style>
 </head>
 <body>
@@ -267,7 +276,16 @@
                 <h4>No products found</h4>
                 <p>Try searching for products using text or image</p>
             </div>
+
+            <div id="loading-spinner" class="text-center" style="display: none;">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Searching products...</p>
+            </div>
         </div>
+
+        
     </div>
 
 
@@ -535,14 +553,31 @@
                     }
                 } else {
                     try {
-                        // Start camera
-                        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        // Start camera with back camera constraint
+                        const constraints = { 
+                            video: { 
+                                facingMode: { exact: "environment" } 
+                            } 
+                        };
+                        
+                        stream = await navigator.mediaDevices.getUserMedia(constraints);
                         cameraView.srcObject = stream;
                         cameraView.style.display = 'block';
                         cameraBtn.innerHTML = '<i class="bi bi-camera-fill"></i> Capture';
                     } catch (err) {
-                        console.error('Error accessing camera:', err);
-                        alert('Could not access camera. Please ensure you have given permission.');
+                        console.error('Error accessing back camera:', err);
+                        
+                        // Fallback to any available camera if back camera fails
+                        try {
+                            console.log('Trying fallback to any available camera');
+                            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                            cameraView.srcObject = stream;
+                            cameraView.style.display = 'block';
+                            cameraBtn.innerHTML = '<i class="bi bi-camera-fill"></i> Capture';
+                        } catch (fallbackErr) {
+                            console.error('Error accessing any camera:', fallbackErr);
+                            alert('Could not access camera. Please ensure you have given permission.');
+                        }
                     }
                 }
             });
